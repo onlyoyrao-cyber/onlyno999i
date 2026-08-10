@@ -136,7 +136,8 @@ fun MainScreen(
                     summary = backtestSummary,
                     records = backtestRecords,
                     bufferSummary = bufferSummary,
-                    bufferedPredictions = bufferedPredictions
+                    bufferedPredictions = bufferedPredictions,
+                    onRunForcedBacktest = { viewModel.runForcedSinglePeriodBacktest() }
                 )
                 NavigationTab.FREQUENCY -> FrequencyScreen(
                     frequencyStats = frequencyStats,
@@ -147,7 +148,8 @@ fun MainScreen(
                     onUpdateRemoteUrl = { viewModel.updateRemoteUrl(it) },
                     onSyncRemoteData = { viewModel.refreshRemoteData() },
                     onAddDraw = { period, nums -> viewModel.addDrawRecord(period, nums) },
-                    onResetData = { viewModel.resetToDefaultHistory() }
+                    onResetData = { viewModel.resetToDefaultHistory() },
+                    onRunForcedBacktest = { viewModel.runForcedSinglePeriodBacktest() }
                 )
             }
         }

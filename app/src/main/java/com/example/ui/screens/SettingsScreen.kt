@@ -46,6 +46,7 @@ fun SettingsScreen(
     onSyncRemoteData: () -> Unit,
     onAddDraw: (String, String) -> Unit,
     onResetData: () -> Unit,
+    onRunForcedBacktest: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var urlInput by remember(remoteUrl) { mutableStateOf(remoteUrl) }
@@ -59,6 +60,64 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
+
+        // Software Version & Forced Backtest Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFCAC4D0), RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "澳门杀神",
+                                color = Color(0xFF1D1B20),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "版本号: v1.2 (首次安装强行回测版)",
+                                color = Color(0xFF6750A4),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFE8DEF8), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "v1.2 已激活",
+                                color = Color(0xFF21005D),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = onRunForcedBacktest,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("⚡ 手动强行回测最新1期数据", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
 
         // Remote URL & Sync Card
         item {

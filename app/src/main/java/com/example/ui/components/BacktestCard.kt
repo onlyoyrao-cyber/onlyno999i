@@ -201,44 +201,53 @@ fun BacktestItemCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Predicted Excluded Numbers vs Actual Drawn
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "预测6个杀号:",
                         color = Color(0xFF49454F),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         for (num in record.predictedExcludedNumbers) {
                             val isHit = record.hitExcludedNumbersInDraw.contains(num)
                             DrawBall(
                                 number = num,
                                 type = if (isHit) BallType.TARGET_X else BallType.EXCLUDED_KILL,
-                                size = 26.dp
+                                size = 30.dp
                             )
                         }
                     }
                 }
 
-                Column(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "实际开奖号码:",
                         color = Color(0xFF49454F),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         for (num in record.actualNumbers) {
                             DrawBall(
                                 number = num,
                                 type = BallType.NORMAL,
-                                size = 26.dp
+                                size = 30.dp
                             )
                         }
                     }

@@ -142,6 +142,49 @@ class AnalyzerViewModel(application: Application) : AndroidViewModel(application
     init {
         viewModelScope.launch {
             repository.ensureInitialized()
+            checkAndPerformV12FirstLaunchBacktest()
+        }
+    }
+
+    private suspend fun checkAndPerformV12FirstLaunchBacktest() {
+        val prefs = getApplication<Application>().getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE)
+        val hasRunFirstBacktest = prefs.getBoolean("v1_2_forced_first_backtest_done", false)
+
+        if (!hasRunFirstBacktest) {
+            val draws = allDraws.value
+            if (draws.size >= 2) {
+                val sorted = draws.sortedByDescending { it.period }
+                val latestDraw = sorted.first()
+                val priorDraws = sorted.drop(1)
+
+                val pred = AnalyzerEngine.predict6ExcludedNumbers(priorDraws, maxNumberPool = _targetPoolSize.value)
+                val actual = latestDraw.numbers
+                val hitExcluded = pred.predictedExcludedNumbers.filter { actual.contains(it) }
+
+                val statusText = if (hitExcluded.isEmpty()) "100%成功避开(0命中)" else "包含命中: ${hitExcluded.joinToString(",")}"
+                _toastMessage.value = "【v1.2 首次安装】强行回测第 ${latestDraw.period} 期完成: $statusText"
+                prefs.edit().putBoolean("v1_2_forced_first_backtest_done", true).apply()
+            }
+        }
+    }
+
+    fun runForcedSinglePeriodBacktest() {
+        viewModelScope.launch {
+            val draws = allDraws.value
+            if (draws.size < 2) {
+                _toastMessage.value = "历史开奖数据不足，无法执行单期强行回测"
+                return@launch
+            }
+            val sorted = draws.sortedByDescending { it.period }
+            val latestDraw = sorted.first()
+            val priorDraws = sorted.drop(1)
+
+            val pred = AnalyzerEngine.predict6ExcludedNumbers(priorDraws, maxNumberPool = _targetPoolSize.value)
+            val actual = latestDraw.numbers
+            val hitExcluded = pred.predictedExcludedNumbers.filter { actual.contains(it) }
+
+            val statusText = if (hitExcluded.isEmpty()) "【完美排除】6杀号完全避开开奖号" else "【部分命中】杀号命中 ${hitExcluded.size} 个: ${hitExcluded.joinToString(",")}"
+            _toastMessage.value = "【强行单期回测】第 ${latestDraw.period} 期推算6杀号[${pred.predictedExcludedNumbers.joinToString(",")}] vs 实际开奖[${actual.joinToString(",")}] 结果: $statusText"
         }
     }
 

@@ -140,7 +140,8 @@ object AnalyzerEngine {
      */
     fun predict6ExcludedNumbers(
         draws: List<DrawRecord>,
-        maxNumberPool: Int = 49
+        maxNumberPool: Int = 49,
+        previousPeriodExcluded: List<Int>? = null
     ): PredictionResult {
         if (draws.isEmpty()) {
             val default6 = (1..6).toList()
@@ -206,6 +207,13 @@ object AnalyzerEngine {
             val minDistanceToPath = triggerInfo.circularPathNumbersInN.minOfOrNull { abs(it - num) } ?: 10
             if (minDistanceToPath > 8) {
                 score -= 15.0
+            }
+
+            // 7. Cross-period Dynamic Rotation Adjustment:
+            // If a number was already recommended in previous period's 6-kill list,
+            // apply a mild score adjustment (+12.0) to encourage dynamic pool variation across periods.
+            if (previousPeriodExcluded != null && previousPeriodExcluded.contains(num)) {
+                score += 12.0
             }
 
             numberScores[num] = score
@@ -344,10 +352,46 @@ object AnalyzerEngine {
         val sortedDraws = draws.sortedByDescending { it.period } // Newest to oldest
         val records = mutableListOf<BufferedPredictionRecord>()
 
-        // 1. Pending Next Period (N+1)
+        // 1. Compute Recent Historical Periods (Period N down to Period N-(bufferSize-2))
+        val maxPastCount = (bufferSize - 1).coerceAtMost(sortedDraws.size - 2)
+        val pastRecords = mutableListOf<BufferedPredictionRecord>()
+        var lastEvaluatedExcluded: List<Int>? = null
+
+        for (i in 0 until maxPastCount) {
+            val targetDraw = sortedDraws[i]
+            val priorHistory = sortedDraws.subList(i + 1, sortedDraws.size)
+            if (priorHistory.size < 2) break
+
+            val pred = predict6ExcludedNumbers(priorHistory, maxPool)
+            val actualNums = targetDraw.numbers
+            val hitNums = pred.predictedExcludedNumbers.filter { actualNums.contains(it) }
+            val status = if (hitNums.isEmpty()) BufferStatus.HIT_SUCCESS else BufferStatus.HIT_WARNING
+
+            if (i == 0) {
+                lastEvaluatedExcluded = pred.predictedExcludedNumbers
+            }
+
+            pastRecords.add(
+                BufferedPredictionRecord(
+                    period = targetDraw.period,
+                    predictedExcludedNumbers = pred.predictedExcludedNumbers,
+                    actualNumbers = actualNums,
+                    hitExcludedNumbers = hitNums,
+                    status = status,
+                    hitCount = hitNums.size,
+                    isPending = false
+                )
+            )
+        }
+
+        // 2. Pending Next Period (N+1) using last evaluated excluded numbers for dynamic rotation
         val latestDraw = sortedDraws.first()
         val nextPeriod = deriveNextPeriod(latestDraw.period)
-        val nextPrediction = predict6ExcludedNumbers(sortedDraws, maxPool)
+        val nextPrediction = predict6ExcludedNumbers(
+            draws = sortedDraws,
+            maxNumberPool = maxPool,
+            previousPeriodExcluded = lastEvaluatedExcluded
+        )
 
         records.add(
             BufferedPredictionRecord(
@@ -361,33 +405,7 @@ object AnalyzerEngine {
             )
         )
 
-        // 2. Recent Historical Periods (Period N down to Period N-(bufferSize-2))
-        val maxPastCount = (bufferSize - 1).coerceAtMost(sortedDraws.size - 2)
-
-        for (i in 0 until maxPastCount) {
-            val targetDraw = sortedDraws[i]
-            // History available prior to targetDraw
-            val priorHistory = sortedDraws.subList(i + 1, sortedDraws.size)
-            if (priorHistory.size < 2) break
-
-            val pred = predict6ExcludedNumbers(priorHistory, maxPool)
-            val actualNums = targetDraw.numbers
-            val hitNums = pred.predictedExcludedNumbers.filter { actualNums.contains(it) }
-            val status = if (hitNums.isEmpty()) BufferStatus.HIT_SUCCESS else BufferStatus.HIT_WARNING
-
-            records.add(
-                BufferedPredictionRecord(
-                    period = targetDraw.period,
-                    predictedExcludedNumbers = pred.predictedExcludedNumbers,
-                    actualNumbers = actualNums,
-                    hitExcludedNumbers = hitNums,
-                    status = status,
-                    hitCount = hitNums.size,
-                    isPending = false
-                )
-            )
-        }
-
+        records.addAll(pastRecords)
         return records
     }
 

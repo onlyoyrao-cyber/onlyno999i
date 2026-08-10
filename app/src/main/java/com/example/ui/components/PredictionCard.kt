@@ -126,7 +126,7 @@ fun PredictionCard(
                     DrawBall(
                         number = num,
                         type = BallType.EXCLUDED_KILL,
-                        size = 46.dp,
+                        size = 40.dp,
                         label = "❌"
                     )
                 }

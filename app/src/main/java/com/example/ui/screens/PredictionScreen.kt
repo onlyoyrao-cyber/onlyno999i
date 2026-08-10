@@ -185,14 +185,16 @@ fun PredictionScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCAC4D0))
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(14.dp)
                 ) {
-                    Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = "第 ${draw.period} 期",
                             color = Color(0xFF1D1B20),
@@ -202,12 +204,17 @@ fun PredictionScreen(
                         Text(
                             text = draw.dateStr,
                             color = Color(0xFF79747E),
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(top = 2.dp)
+                            fontSize = 11.sp
                         )
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         draw.numbers.forEachIndexed { index, num ->
                             DrawBall(
                                 number = num,

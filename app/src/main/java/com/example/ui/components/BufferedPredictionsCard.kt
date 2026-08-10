@@ -273,63 +273,72 @@ private fun BufferedItemRow(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Display Predictions vs Actual
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Column 1: Predicted Excluded 6 Numbers
-                Column(modifier = Modifier.weight(1f)) {
+                // Section 1: Predicted Excluded 6 Numbers
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "缓冲推测6杀号:",
                         color = Color(0xFF49454F),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         record.predictedExcludedNumbers.forEach { num ->
                             val isHit = record.hitExcludedNumbers.contains(num)
                             DrawBall(
                                 number = num,
                                 type = if (isHit) BallType.EXCLUDED_KILL else BallType.NORMAL,
-                                size = 26.dp
+                                size = 30.dp
                             )
                         }
                     }
                 }
 
-                // Column 2: Actual Numbers (or Pending)
-                Column(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Section 2: Actual Numbers (or Pending)
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "实际开奖号码:",
                         color = Color(0xFF49454F),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     if (record.actualNumbers != null) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             record.actualNumbers.forEach { num ->
                                 val isPredictedHit = record.hitExcludedNumbers.contains(num)
                                 DrawBall(
                                     number = num,
                                     type = if (isPredictedHit) BallType.EXCLUDED_KILL else BallType.SANDWICH_Y,
-                                    size = 26.dp
+                                    size = 30.dp
                                 )
                             }
                         }
                     } else {
                         Box(
                             modifier = Modifier
-                                .height(26.dp)
+                                .height(28.dp)
                                 .background(Color(0xFFE8DEF8), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "⏳ 等待下期开奖结果...",
                                 color = Color(0xFF21005D),
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
