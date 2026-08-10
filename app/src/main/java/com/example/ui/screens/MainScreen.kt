@@ -77,7 +77,7 @@ fun MainScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "分析器 (Macau JC Analyzer)",
+                        text = "澳门杀神",
                         color = Color(0xFF1D1B20),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
