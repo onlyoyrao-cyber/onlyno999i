@@ -1,0 +1,6 @@
+{
+  "name": "分析器",
+  "description": "澳门彩数据分析器 - 隔期同号触发算法、环形路径定位与6大杀号预测及回测系统",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

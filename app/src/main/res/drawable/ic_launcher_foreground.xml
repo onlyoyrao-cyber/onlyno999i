@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Golden Circular Target & Loop -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFF59E0B"
+        android:strokeWidth="3.5"
+        android:pathData="M54,30 A24,24 0 1,1 30,54" />
+    
+    <path
+        android:fillColor="#FFF59E0B"
+        android:pathData="M30,50 L34,58 L26,58 Z" />
+
+    <!-- Center Analytics Number / Ball -->
+    <path
+        android:fillColor="#FF10B981"
+        android:pathData="M54,54 m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0" />
+
+    <!-- Inner Core Dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+    <!-- Surrounding 6 Nodes representing the 6 excluded/predicted numbers -->
+    <path android:fillColor="#FF3B82F6" android:pathData="M54,22 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#FF3B82F6" android:pathData="M81,38 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#FF3B82F6" android:pathData="M81,70 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#FF3B82F6" android:pathData="M54,86 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path android:fillColor="#FF3B82F6" android:pathData="M27,70 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+</vector>
