@@ -95,9 +95,14 @@ class AnalyzerViewModel(application: Application) : AndroidViewModel(application
         initialValue = BacktestSummary()
     )
 
-    val bufferedPredictions: StateFlow<List<BufferedPredictionRecord>> = combine(allDraws, targetPoolSize) { draws, poolSize ->
+    val bufferedPredictions: StateFlow<List<BufferedPredictionRecord>> = combine(allDraws, targetPoolSize, predictionResult) { draws, poolSize, predRes ->
         if (draws.isEmpty()) emptyList()
-        else AnalyzerEngine.generate10PeriodPredictionBuffer(draws, bufferSize = 10, maxPool = poolSize)
+        else AnalyzerEngine.generate10PeriodPredictionBuffer(
+            draws = draws,
+            bufferSize = 10,
+            maxPool = poolSize,
+            overridePendingNumbers = predRes?.predictedExcludedNumbers
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -142,6 +147,18 @@ class AnalyzerViewModel(application: Application) : AndroidViewModel(application
     init {
         viewModelScope.launch {
             repository.ensureInitialized()
+
+            // Automatically fetch and sync latest remote data on every startup
+            _isRefreshing.value = true
+            val syncResult = repository.refreshFromRemote(_remoteUrl.value)
+            _isRefreshing.value = false
+
+            syncResult.onSuccess { count ->
+                if (count > 0) {
+                    _toastMessage.value = "⚡ 【开机自动抓取】同步成功！获取到 $count 期最新数据"
+                }
+            }
+
             checkAndPerformV12FirstLaunchBacktest()
         }
     }

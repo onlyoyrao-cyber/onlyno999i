@@ -345,7 +345,8 @@ object AnalyzerEngine {
     fun generate10PeriodPredictionBuffer(
         draws: List<DrawRecord>,
         bufferSize: Int = 10,
-        maxPool: Int = 49
+        maxPool: Int = 49,
+        overridePendingNumbers: List<Int>? = null
     ): List<BufferedPredictionRecord> {
         if (draws.isEmpty()) return emptyList()
 
@@ -355,7 +356,6 @@ object AnalyzerEngine {
         // 1. Compute Recent Historical Periods (Period N down to Period N-(bufferSize-2))
         val maxPastCount = (bufferSize - 1).coerceAtMost(sortedDraws.size - 2)
         val pastRecords = mutableListOf<BufferedPredictionRecord>()
-        var lastEvaluatedExcluded: List<Int>? = null
 
         for (i in 0 until maxPastCount) {
             val targetDraw = sortedDraws[i]
@@ -366,10 +366,6 @@ object AnalyzerEngine {
             val actualNums = targetDraw.numbers
             val hitNums = pred.predictedExcludedNumbers.filter { actualNums.contains(it) }
             val status = if (hitNums.isEmpty()) BufferStatus.HIT_SUCCESS else BufferStatus.HIT_WARNING
-
-            if (i == 0) {
-                lastEvaluatedExcluded = pred.predictedExcludedNumbers
-            }
 
             pastRecords.add(
                 BufferedPredictionRecord(
@@ -384,19 +380,18 @@ object AnalyzerEngine {
             )
         }
 
-        // 2. Pending Next Period (N+1) using last evaluated excluded numbers for dynamic rotation
+        // 2. Pending Next Period (N+1): Strictly single calculation, matching top recommendation 100%
         val latestDraw = sortedDraws.first()
         val nextPeriod = deriveNextPeriod(latestDraw.period)
-        val nextPrediction = predict6ExcludedNumbers(
+        val nextExcludedNums = overridePendingNumbers ?: predict6ExcludedNumbers(
             draws = sortedDraws,
-            maxNumberPool = maxPool,
-            previousPeriodExcluded = lastEvaluatedExcluded
-        )
+            maxNumberPool = maxPool
+        ).predictedExcludedNumbers
 
         records.add(
             BufferedPredictionRecord(
                 period = nextPeriod,
-                predictedExcludedNumbers = nextPrediction.predictedExcludedNumbers,
+                predictedExcludedNumbers = nextExcludedNums,
                 actualNumbers = null,
                 hitExcludedNumbers = emptyList(),
                 status = BufferStatus.PENDING,
