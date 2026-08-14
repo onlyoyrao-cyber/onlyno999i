@@ -32,6 +32,7 @@ jobs:
         with:
           gradle-version: '9.3.1'
           cache-disabled: true
+          validate-wrappers: false
 
       # 创建环境变量空文件 (防止报错)
       - name: Create empty .env if missing
