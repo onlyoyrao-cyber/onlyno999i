@@ -28,8 +28,11 @@ jobs:
     - name: Create empty .env if missing
       run: touch .env
 
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
     - name: Build Debug APK
-      run: gradle assembleDebug --stacktrace
+      run: ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
