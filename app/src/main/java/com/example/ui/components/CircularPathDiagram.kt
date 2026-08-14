@@ -31,7 +31,7 @@ fun CircularPathDiagram(
     triggerInfo: TriggerInfo,
     modifier: Modifier = Modifier
 ) {
-    val totalPositions = 6
+    val totalPositions = triggerInfo.totalPositions
     val baseP = triggerInfo.basePositionP.coerceIn(1, totalPositions)
     val targetPositions = triggerInfo.targetPositions1Based
 
@@ -114,7 +114,7 @@ fun CircularPathDiagram(
                     }
                 }
 
-                // Overlay Text Badges for positions 1..6
+                // Overlay Text Badges for positions 1..7
                 for (i in 1..totalPositions) {
                     val angleDeg = (i - 1) * (360.0 / totalPositions) - 90.0
                     val angleRad = Math.toRadians(angleDeg)

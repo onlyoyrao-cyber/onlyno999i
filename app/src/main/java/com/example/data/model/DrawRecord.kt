@@ -17,7 +17,8 @@ data class TriggerInfo(
     val sandwichNumberY: Int = 0,
     val basePositionP: Int = 0,
     val targetPositions1Based: List<Int> = emptyList(),
-    val circularPathNumbersInN: List<Int> = emptyList()
+    val circularPathNumbersInN: List<Int> = emptyList(),
+    val totalPositions: Int = 7
 )
 
 data class PredictionResult(

@@ -61,7 +61,8 @@ object AnalyzerEngine {
                     sandwichNumberY = numY,
                     basePositionP = baseP,
                     targetPositions1Based = targetPositions,
-                    circularPathNumbersInN = circularPathNumbers
+                    circularPathNumbersInN = circularPathNumbers,
+                    totalPositions = m
                 )
             }
         }
@@ -88,7 +89,8 @@ object AnalyzerEngine {
                         sandwichNumberY = numY,
                         basePositionP = baseP,
                         targetPositions1Based = targetPos,
-                        circularPathNumbersInN = targetPos.mapNotNull { dN.numbers.getOrNull(it - 1) }
+                        circularPathNumbersInN = targetPos.mapNotNull { dN.numbers.getOrNull(it - 1) },
+                        totalPositions = m
                     )
                 }
             }
@@ -106,7 +108,8 @@ object AnalyzerEngine {
             sandwichNumberY = drawNMinus1.numbers.firstOrNull() ?: 1,
             basePositionP = defaultP,
             targetPositions1Based = computeCircularTargetPositions(defaultP, m),
-            circularPathNumbersInN = drawN.numbers.take(3)
+            circularPathNumbersInN = drawN.numbers.take(3),
+            totalPositions = m
         )
     }
 
@@ -159,83 +162,125 @@ object AnalyzerEngine {
         val latestDraw = sortedDraws.first()
         val nextPeriod = deriveNextPeriod(latestDraw.period)
 
-        val triggerInfo = detectTrigger(sortedDraws)
+        // 蒙特卡洛暴力对撞引擎 (Monte Carlo Simulation)
+        val past7Draws = sortedDraws.take(7)
+        val historicalNumbers = past7Draws.flatMap { it.numbers }.toSet()
+        
+        var bestCandidates = mutableListOf<List<Int>>()
+        var minHits = Int.MAX_VALUE
 
-        // Calculate frequency and omission statistics for pool 1..maxNumberPool
-        val frequencyStats = computeFrequencyStats(sortedDraws, maxNumberPool)
+        val iterations = 50000
+        val random = java.util.Random()
 
-        // Compute Likelihood Score for each number in 1..maxNumberPool
-        // Lower score = LESS LIKELY to appear in next period = Candidate for Exclusion (杀号)!
-        val numberScores = mutableMapOf<Int, Double>()
-
-        for (num in 1..maxNumberPool) {
-            var score = 50.0 // Base score
-
-            val stat = frequencyStats[num]
-            val omission = stat?.currentOmission ?: 0
-            val freq30 = stat?.frequency30 ?: 0
-
-            // 1. Circular Path Protection: Numbers in circular path in Draw N have high likelihood to appear (+100)
-            if (triggerInfo.circularPathNumbersInN.contains(num)) {
-                score += 100.0
+        // 暴力对撞 50,000 次
+        for (i in 0 until iterations) {
+            val candidate = mutableSetOf<Int>()
+            while (candidate.size < 6) {
+                candidate.add(random.nextInt(maxNumberPool) + 1)
             }
 
-            // 2. Target X and Sandwich Y protection (+80)
-            if (num == triggerInfo.targetNumberX || num == triggerInfo.sandwichNumberY) {
-                score += 80.0
+            // 计算对撞“命中数”（命中历史记录的号码越少越好，0表示完美踩空）
+            var hits = 0
+            for (num in candidate) {
+                if (historicalNumbers.contains(num)) {
+                    hits++
+                }
             }
 
-            // 3. Draw N numbers have rebound probability (+40)
-            if (latestDraw.numbers.contains(num)) {
-                score += 40.0
+            if (hits < minHits) {
+                minHits = hits
+                bestCandidates.clear()
+                bestCandidates.add(candidate.toList().sorted())
+            } else if (hits == minHits) {
+                // 如果命中数一样低，也加入候选池，增加随机性
+                // 为防止池子过大，限制只保存最多 100 组最优解
+                if (bestCandidates.size < 100) {
+                    bestCandidates.add(candidate.toList().sorted())
+                }
             }
-
-            // 4. Extreme Deep Cold Omission Penalty (-50 to -100):
-            // Numbers with high omission (> 18) and low 30-draw frequency are cold states that tend to remain omitted
-            if (omission > 15) {
-                score -= (omission - 15) * 4.0
-            }
-
-            // 5. Over-saturated Cooling Phase Penalty (-30):
-            // Numbers that appeared too frequently in last 5 draws enter a cooling phase
-            val freqLast5 = sortedDraws.take(5).count { it.numbers.contains(num) }
-            if (freqLast5 >= 3) {
-                score -= 35.0
-            }
-
-            // 6. Non-neighbor position divergence penalty (-20)
-            val minDistanceToPath = triggerInfo.circularPathNumbersInN.minOfOrNull { abs(it - num) } ?: 10
-            if (minDistanceToPath > 8) {
-                score -= 15.0
-            }
-
-            // 7. Cross-period Dynamic Rotation Adjustment:
-            // If a number was already recommended in previous period's 6-kill list,
-            // apply a mild score adjustment (+12.0) to encourage dynamic pool variation across periods.
-            if (previousPeriodExcluded != null && previousPeriodExcluded.contains(num)) {
-                score += 12.0
-            }
-
-            numberScores[num] = score
         }
 
-        // Select 6 numbers with the LOWEST score as the 6 Excluded Numbers (6大杀号)
-        val excluded6 = numberScores.entries
-            .sortedBy { it.value }
-            .map { it.key }
-            .take(6)
-            .sorted()
+        // 随机抽取其中一组最优解
+        val excluded6 = if (bestCandidates.isNotEmpty()) {
+            bestCandidates[random.nextInt(bestCandidates.size)]
+        } else {
+            (1..6).toList()
+        }
 
-        val confidence = calculateConfidenceScore(triggerInfo, excluded6, frequencyStats)
+        val triggerInfo = detectTrigger(sortedDraws) // 可以保留原有的特征分析供UI展示
+
+        // 如果 Monte Carlo 实在选不出完美踩空（命中数大于0），则降级使用传统公式引擎
+        if (minHits > 0) {
+            val frequencyStats = computeFrequencyStats(sortedDraws, maxNumberPool)
+            val numberScores = mutableMapOf<Int, Double>()
+
+            for (num in 1..maxNumberPool) {
+                var score = 50.0 // Base score
+
+                val stat = frequencyStats[num]
+                val omission = stat?.currentOmission ?: 0
+                val freq30 = stat?.frequency30 ?: 0
+
+                // 1. Circular Path Protection
+                if (triggerInfo.circularPathNumbersInN.contains(num)) score += 100.0
+
+                // 2. Target X and Sandwich Y protection
+                if (num == triggerInfo.targetNumberX || num == triggerInfo.sandwichNumberY) score += 80.0
+
+                // 3. Draw N numbers have rebound probability
+                if (latestDraw.numbers.contains(num)) score += 40.0
+
+                // 4. Extreme Deep Cold Omission Penalty
+                if (omission > 15) score -= (omission - 15) * 4.0
+
+                // 5. Over-saturated Cooling Phase Penalty
+                val freqLast5 = sortedDraws.take(5).count { it.numbers.contains(num) }
+                if (freqLast5 >= 3) score -= 35.0
+
+                // 6. Non-neighbor position divergence penalty
+                val minDistanceToPath = triggerInfo.circularPathNumbersInN.minOfOrNull { kotlin.math.abs(it - num) } ?: 10
+                if (minDistanceToPath > 8) score -= 15.0
+
+                // 7. Cross-period Dynamic Rotation Adjustment
+                if (previousPeriodExcluded != null && previousPeriodExcluded.contains(num)) score += 12.0
+
+                numberScores[num] = score
+            }
+
+            val traditionalExcluded6 = numberScores.entries
+                .sortedBy { it.value }
+                .map { it.key }
+                .take(6)
+                .sorted()
+
+            return PredictionResult(
+                nextPeriod = nextPeriod,
+                predictedExcludedNumbers = traditionalExcluded6,
+                confidenceScore = 75,
+                triggerInfo = triggerInfo,
+                coldHotSummary = "由于 AI 对撞引擎未能找到完美踩空的号码组合（最低碰撞 ${minHits} 次），已自动降级为【传统公式推演引擎】选号。基于冷热偏离度锁定 6 大杀号: ${traditionalExcluded6.joinToString("、")}",
+                algorithmNotes = listOf(
+                    "降级原因: Monte Carlo 对撞 ${iterations} 次均发生历史碰撞 (最低 ${minHits})，说明近期号码极度分散，无法暴力踩空。",
+                    "触发机制: 目标号 X=${triggerInfo.targetNumberX}, 夹心号 Y=${triggerInfo.sandwichNumberY}",
+                    "推演引擎: 传统固定公式引擎 (智能降级接管)",
+                    "最终锁定杀号: ${traditionalExcluded6.joinToString(", ")}"
+                )
+            )
+        }
+
+        val confidence = if (minHits == 0) 99 else if (minHits == 1) 85 else 70
+        
+        val hitMsg = if (minHits == 0) "【完美踩空7期】" else "【极低历史碰撞】"
 
         val notes = listOf(
-            "触发机制: 目标号 X=${triggerInfo.targetNumberX} (第${triggerInfo.position1Based}位), 夹心号 Y=${triggerInfo.sandwichNumberY}",
-            "基准位锁定: P=第${triggerInfo.basePositionP}名, 环形目标位置=${triggerInfo.targetPositions1Based.joinToString(",")}",
-            "边缘环形保护: 排除热号与受保护位, 锁定6个最高遗漏/冷态偏离号码",
-            "自动排除名单: ${excluded6.joinToString(", ")}"
+            "推演引擎: 蒙特卡洛暴力对撞 (Monte Carlo Simulation)",
+            "计算量: 在 ${iterations} 次随机生成中暴力寻优",
+            "对撞池: 回溯最近 ${past7Draws.size} 期历史开奖数据",
+            "评估结果: 命中历史轨迹 ${minHits} 次 $hitMsg",
+            "最终锁定杀号: ${excluded6.joinToString(", ")}"
         )
 
-        val coldHotSummary = "全局扫描已完成: 筛选出6个在下一个周期中落空概率最高(最不可能出现)的号码: ${excluded6.joinToString("、")}"
+        val coldHotSummary = "系统通过 Monte Carlo 暴力引擎，从 ${iterations} 组模拟组合中提取出表现最冷、踩空率最高的6大杀号: ${excluded6.joinToString("、")}"
 
         return PredictionResult(
             nextPeriod = nextPeriod,
@@ -413,14 +458,4 @@ object AnalyzerEngine {
         }
     }
 
-    private fun calculateConfidenceScore(
-        trigger: TriggerInfo,
-        excluded6: List<Int>,
-        stats: Map<Int, FrequencyStat>
-    ): Int {
-        var base = 92
-        if (trigger.triggered) base += 5
-        if (trigger.circularPathNumbersInN.isNotEmpty()) base += 2
-        return base.coerceIn(85, 99)
-    }
 }

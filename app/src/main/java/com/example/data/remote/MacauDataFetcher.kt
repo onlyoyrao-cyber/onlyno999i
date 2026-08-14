@@ -52,7 +52,7 @@ object MacauDataFetcher {
         try {
             // Match pattern like: 2026222 21:35 05,12,23,31,38,45
             val periodPattern = Pattern.compile("(202[0-9]{3,4})")
-            val numberPattern = Pattern.compile("(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})")
+            val numberPattern = Pattern.compile("(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})[\\s,，\\-]+(\\d{1,2})(?:[\\s,，\\-]+(\\d{1,2}))?")
 
             val periodMatcher = periodPattern.matcher(text)
             val numberMatcher = numberPattern.matcher(text)
@@ -73,6 +73,11 @@ object MacauDataFetcher {
                 val n4 = numberMatcher.group(4).toIntOrNull() ?: 4
                 val n5 = numberMatcher.group(5).toIntOrNull() ?: 5
                 val n6 = numberMatcher.group(6).toIntOrNull() ?: 6
+                
+                val numbersList = mutableListOf(n1, n2, n3, n4, n5, n6)
+                if (numberMatcher.groupCount() >= 7 && numberMatcher.group(7) != null) {
+                    numberMatcher.group(7).toIntOrNull()?.let { numbersList.add(it) }
+                }
 
                 val dateStr = sdf.format(Date(System.currentTimeMillis() - idx * 86400000L))
 
@@ -80,7 +85,7 @@ object MacauDataFetcher {
                     DrawRecord(
                         period = p,
                         dateStr = dateStr,
-                        numbers = listOf(n1, n2, n3, n4, n5, n6)
+                        numbers = numbersList
                     )
                 )
                 idx++
@@ -110,9 +115,9 @@ object MacauDataFetcher {
             val dateStr = sdf.format(cal.time)
             cal.add(Calendar.DAY_OF_YEAR, -1)
 
-            // Generate 6 distinct sorted numbers between 1 and 49
+            // Generate 7 distinct sorted numbers between 1 and 49
             val numbers = mutableSetOf<Int>()
-            while (numbers.size < 6) {
+            while (numbers.size < 7) {
                 numbers.add(random.nextInt(1, 50))
             }
 
@@ -133,7 +138,7 @@ object MacauDataFetcher {
             val drawNMinus2 = sortedAsc[idx - 2]
             val drawN = sortedAsc[idx]
 
-            val targetPos = random.nextInt(0, 6)
+            val targetPos = random.nextInt(0, 7)
             val repeatedNum = drawNMinus2.numbers[targetPos]
 
             val newNumbers = drawN.numbers.toMutableList()

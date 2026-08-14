@@ -222,10 +222,10 @@ class AnalyzerViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             val nums = numbersStr.split(",", " ", "，")
                 .mapNotNull { it.trim().toIntOrNull() }
-                .take(6)
+                .take(7)
 
-            if (period.isBlank() || nums.size < 6) {
-                _toastMessage.value = "请输入有效的期数与6个开奖号码"
+            if (period.isBlank() || nums.size < 7) {
+                _toastMessage.value = "请输入有效的期数与7个开奖号码"
                 return@launch
             }
 
