@@ -55,9 +55,11 @@ jobs:
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
           fi
 
-      # 执行打包命令
+      # 赋予 gradlew 权限并执行打包命令
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace --no-daemon --no-configuration-cache
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace --no-daemon --no-configuration-cache
 
       # 上传生成的 APK 文件
       - name: Upload APK Artifact
