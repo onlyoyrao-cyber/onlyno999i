@@ -452,7 +452,7 @@ object AnalyzerEngine {
         return records
     }
 
-    private fun deriveNextPeriod(currentPeriod: String): String {
+    fun deriveNextPeriod(currentPeriod: String): String {
         return try {
             val num = currentPeriod.toLong()
             (num + 1).toString()

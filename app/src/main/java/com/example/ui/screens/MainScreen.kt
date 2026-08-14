@@ -38,7 +38,6 @@ import com.example.ui.viewmodel.AnalyzerViewModel
 enum class NavigationTab(val title: String, val icon: ImageVector) {
     PREDICTION("预测杀号", Icons.Default.Analytics),
     TRIGGER("触发推演", Icons.Default.AltRoute),
-    BACKTEST("自动回测", Icons.Default.Speed),
     FREQUENCY("冷热矩阵", Icons.Default.BarChart),
     SETTINGS("数据管理", Icons.Default.Settings)
 }
@@ -131,13 +130,6 @@ fun MainScreen(
                 NavigationTab.TRIGGER -> TriggerDetailScreen(
                     triggerInfo = predictionResult?.triggerInfo,
                     recentDraws = allDraws
-                )
-                NavigationTab.BACKTEST -> BacktestScreen(
-                    summary = backtestSummary,
-                    records = backtestRecords,
-                    bufferSummary = bufferSummary,
-                    bufferedPredictions = bufferedPredictions,
-                    onRunForcedBacktest = { viewModel.runForcedSinglePeriodBacktest() }
                 )
                 NavigationTab.FREQUENCY -> FrequencyScreen(
                     frequencyStats = frequencyStats,
