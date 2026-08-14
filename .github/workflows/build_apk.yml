@@ -54,26 +54,35 @@ jobs:
             echo "No secret found and no existing keystore. Generating a temporary one..."
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
           fi
+          
+          # 自动为 Release 变体生成一个临时的签名文件 (如果不存在)
+          if [ ! -f my-upload-key.jks ]; then
+            echo "Generating temporary release keystore..."
+            keytool -genkey -v -keystore my-upload-key.jks -storepass android -alias upload -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Release"
+          fi
 
-      # 使用全局 Gradle 执行打包命令 (无需依赖仓库自带的 wrapper)
-      - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace --no-daemon --no-configuration-cache
+      # 使用全局 Gradle 执行打包命令 (打包所有变体 Debug + Release)
+      - name: Build All APK Variants
+        env:
+          STORE_PASSWORD: "android"
+          KEY_PASSWORD: "android"
+        run: gradle assemble --stacktrace --no-daemon --no-configuration-cache
 
       # 上传生成的 APK 文件
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-apks
+          path: app/build/outputs/apk/**/*.apk
 
-      # 自动发布所有的变体安装包到 Release
+      # 自动发布所有的变体安装包到 Release 页面
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.event_name != 'pull_request'
         with:
           tag_name: "v1.4.${{ github.run_number }}"
-          name: "app-debug v1.4.${{ github.run_number }}"
-          files: app/build/outputs/apk/debug/*.apk
+          name: "app-release v1.4.${{ github.run_number }}"
+          files: app/build/outputs/apk/**/*.apk
           draft: false
           prerelease: false
           generate_release_notes: true
