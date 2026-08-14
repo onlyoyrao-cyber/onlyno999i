@@ -17,8 +17,11 @@ android {
     applicationId = "com.aistudio.analyzer.macaujc.p8q2"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.2"
+    
+    // 自动抓取 GitHub Actions 的运行次数作为版本号，实现真正的云端自动迭代版本
+    val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 3
+    versionCode = runNumber
+    versionName = "1.4.$runNumber"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

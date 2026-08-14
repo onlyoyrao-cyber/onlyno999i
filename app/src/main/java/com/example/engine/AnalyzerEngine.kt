@@ -170,7 +170,10 @@ object AnalyzerEngine {
         var minHits = Int.MAX_VALUE
 
         val iterations = 50000
-        val random = java.util.Random()
+        // 固定随机种子：使用下一期和当前期的期号结合作为 Seed。
+        // 这样保证同一个历史状态下，刷新多少次算出来的 50000 组随机结果都是绝对固定不变的。
+        val seedString = "${nextPeriod}_${latestDraw.period}"
+        val random = java.util.Random(seedString.hashCode().toLong())
 
         // 暴力对撞 50,000 次
         for (i in 0 until iterations) {
